@@ -1,0 +1,37 @@
+site_name: My Project Docs
+
+nav:
+  - Home: index.md
+
+plugins:
+  - search
+  - cdoc:
+      project_name: My Project
+      version_file: version.json
+
+      # Source directories
+      sources:
+        - root: src/core
+          nav_title: Core API
+          output_dir: api/core
+
+        - root: src/drivers
+          nav_title: Driver API
+          output_dir: api/drivers
+          extensions: [".c"]
+
+        - root: src/lib
+          nav_title: Library API
+          output_dir: api/lib
+
+        - root: src/tests
+          nav_title: Test API
+          output_dir: api/tests
+          extensions: [".c"]
+          igt:
+            group_by: [category, mega_feature, sub_category, functionality]
+
+      # Rendering
+      convert_rst: true
+      convert_gtkdoc: true
+      appendix_code_usages: true

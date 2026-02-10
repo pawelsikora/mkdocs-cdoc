@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mkdocs-cdoc"
+version = "1.0.0"
+description = "MkDocs plugin that generates API documentation from C/C++ source comments, with built-in support for IGT GPU Tools test catalogs"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "mkdocs-cdoc contributors"},
+]
+keywords = ["mkdocs", "documentation", "c", "c++", "autodoc", "api", "igt"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Documentation",
+    "Framework :: MkDocs",
+]
+dependencies = [
+    "mkdocs>=1.4",
+]
+
+[project.optional-dependencies]
+clang = ["clang>=14.0"]
+dev = [
+    "pytest",
+    "black",
+    "flake8",
+    "pylint",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/mkdocs-cdoc"
+Repository = "https://github.com/your-org/mkdocs-cdoc"
+Issues = "https://github.com/your-org/mkdocs-cdoc/issues"
+
+[project.entry-points."mkdocs.plugins"]
+cdoc = "mkdocs_cdoc.plugin:CdocPlugin"
+
+[tool.setuptools.packages.find]
+include = ["mkdocs_cdoc*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+
+[tool.pylint.messages_control]
+disable = [
+    "C0114",  # missing-module-docstring
+    "C0115",  # missing-class-docstring
+    "C0116",  # missing-function-docstring
+    "C0301",  # line-too-long
+    "R0903",  # too-few-public-methods
+    "R0913",  # too-many-arguments
+    "R0914",  # too-many-locals
+    "R0915",  # too-many-statements
+    "W0511",  # fixme/todo
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

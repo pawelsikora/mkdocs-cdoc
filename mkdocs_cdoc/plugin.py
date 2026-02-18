@@ -604,7 +604,7 @@ class CdocPlugin(BasePlugin[CdocConfig]):
                 SourceGroup(
                     root=root,
                     nav_title=entry.get("nav_title", f"API ({basename})"),
-                    output_dir=entry.get("output_dir", f"api/{basename}"),
+                    output_dir=entry.get("output_dir", f"api_reference/{basename}"),
                     extensions=entry.get("extensions", self.config["autodoc_extensions"]),
                     exclude=entry.get("exclude", self.config["autodoc_exclude"]),
                     clang_args=merged,

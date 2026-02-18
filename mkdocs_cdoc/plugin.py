@@ -156,7 +156,7 @@ class CdocConfig(MkDocsConfig):
     language = config_options.Type(str, default="c")
     fallback_parser = config_options.Type(bool, default=True)
     autodoc = config_options.Type(bool, default=True)
-    autodoc_output_dir = config_options.Type(str, default="api")
+    autodoc_output_dir = config_options.Type(str, default="api_reference")
     autodoc_nav_title = config_options.Type(str, default="API Reference")
     autodoc_extensions = config_options.Type(list, default=[".c", ".h"])
     autodoc_exclude = config_options.Type(list, default=[])

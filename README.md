@@ -1,15 +1,35 @@
 # mkdocs-cdoc
 
 [![CI](https://github.com/pawelsikora/mkdocs-cdoc/actions/workflows/ci.yml/badge.svg)](https://github.com/pawelsikora/mkdocs-cdoc/actions/workflows/ci.yml)
-[![PyPI version](https://img.shields.io/pypi/v/mkdocs-cdoc)](https://pypi.org/project/mkdocs-cdoc/)
+![PyPI - Version](https://img.shields.io/pypi/v/mkdocs-cdoc)
 ![Python versions](https://img.shields.io/pypi/pyversions/mkdocs-cdoc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MkDocs](https://img.shields.io/badge/MkDocs-plugin-blue)](https://www.mkdocs.org/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-**Generate browsable API documentation from C/C++ source comments directly in MkDocs** — with cross-referencing, symbol indexing, and basic support for test catalogs.
+**Generate browsable API documentation from C/C++ source comments directly in MkDocs** — with cross-referencing, symbol indexing, and first-class support for [IGT GPU Tools](https://gitlab.freedesktop.org/drm/igt-gpu-tools) test catalogs.
 
 Parses `/** ... */` doc comments using libclang (with a regex fallback), converts reST and gtk-doc markup to Markdown, and builds a fully linked API reference with per-symbol anchors, an A–Z index, and automatic cross-references across all your source files and hand-written pages.
+
+---
+
+## Table of contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Configuration](#configuration)
+  - [Single-source setup](#single-source-setup)
+  - [Multi-source setup](#multi-source-setup)
+  - [Source group options](#source-group-options)
+  - [Global options](#global-options)
+- [Cross-references](#cross-references)
+- [Rendering](#rendering)
+- [gtk-doc migration](#gtk-doc-migration)
+- [Inline directives](#inline-directives)
+- [Test documentation (IGT GPU Tools)](#test-documentation-igt-gpu-tools)
+- [Credits](#credits)
+- [License](#license)
 
 ---
 
@@ -24,7 +44,7 @@ Parses `/** ... */` doc comments using libclang (with a regex fallback), convert
 
 ---
 
-## Install
+## Installation
 
 ```bash
 pip install mkdocs-cdoc
@@ -36,9 +56,14 @@ For full clang-based parsing (recommended):
 # Ubuntu / Debian
 sudo apt install python3-clang libclang-dev
 
-# Or via pip
+# macOS
+brew install llvm
+
+# Or via pip extras
 pip install mkdocs-cdoc[clang]
 ```
+
+---
 
 ## Quick start
 
@@ -50,7 +75,48 @@ plugins:
       source_root: src/
 ```
 
-Multiple source trees with their own nav sections:
+This scans all `.c` and `.h` files under `src/`, generates per-file API pages, and adds them to the nav under "API Reference".
+
+---
+
+## Configuration
+
+### Single-source setup
+
+When you have a single source tree, use the flat `autodoc_*` shortcuts:
+
+```yaml
+plugins:
+  - cdoc:
+      source_root: src/
+      autodoc_nav_title: My API
+      autodoc_output_dir: reference
+      autodoc_extensions: [".c", ".h", ".hpp"]
+      autodoc_exclude: ["**/internal/*", "test_*.c"]
+      autodoc_index: true
+      autodoc_pages:
+        - docs/getting-started.md
+        - docs/migration-guide.md
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `source_root` | `""` | Path to the source tree |
+| `autodoc_nav_title` | `"API Reference"` | Nav section heading |
+| `autodoc_output_dir` | `"api"` | Where generated pages go |
+| `autodoc_extensions` | `[".c", ".h"]` | File extensions to scan |
+| `autodoc_exclude` | `[]` | Glob patterns to skip |
+| `autodoc_index` | `true` | Generate an overview page with file table and A–Z index |
+| `autodoc_pages` | `[]` | Extra hand-written pages to include in the nav section |
+| `autodoc` | `true` | Enable autodoc page generation (set `false` to only use inline directives) |
+
+Setting `autodoc_index: false` disables the overview page — useful if you only want individual file pages without a landing page.
+
+Setting `autodoc: false` disables all automatic page generation entirely. You'd then use [inline directives](#inline-directives) to pull specific symbols into hand-written pages.
+
+### Multi-source setup
+
+For projects with multiple source trees (libraries, drivers, tests), use `sources:`:
 
 ```yaml
 plugins:
@@ -67,11 +133,19 @@ plugins:
           nav_title: Driver API
           output_dir: api/drivers
           extensions: [".c"]
+          exclude: ["*_test.c"]
+
+        - root: src/utils
+          nav_title: Utilities
+          output_dir: api/utils
+          index: false
+          pages:
+            - docs/utils-guide.md
 ```
 
 The `version_file` is scanned for a line matching `version: 'X.Y'` (or `VERSION = "1.2.3"`, `"version": "2.0"`, etc.) — it works with JSON, YAML, Python, meson.build, or any file with a version key-value pair.
 
-With multiple source groups, a top-level overview page is generated automatically showing the project name, a version badge, and links to each group. Individual source file pages are generated and reachable via cross-references and the index — they just don't crowd the nav:
+With multiple source groups a top-level overview page is generated automatically, showing the project name, a version badge, and links to each group:
 
 ```
 API Reference
@@ -79,9 +153,10 @@ API Reference
     Overview
   Driver API
     Overview
+  Utilities
 ```
 
-## Source group options
+### Source group options
 
 Each entry under `sources:` accepts:
 
@@ -95,7 +170,192 @@ Each entry under `sources:` accepts:
 | `clang_args` | `[]` | Extra flags, appended to global `clang_args` |
 | `index` | `true` | Generate an overview page |
 | `pages` | `[]` | Extra hand-written pages to include in the nav |
-| `igt` | — | IGT test framework options ([see below](#test-documentation-igt-gpu-tools)) |
+| `igt` | — | IGT test framework options ([see below](#enabling-test-mode)) |
+
+### Global options
+
+These apply to all source groups:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `project_name` | `""` | Project name on the top-level overview page |
+| `version_file` | `""` | File to extract version from |
+| `clang_args` | `[]` | Global clang flags (merged with per-group flags) |
+| `convert_rst` | `true` | Convert reST markup to Markdown |
+| `convert_gtkdoc` | `false` | Convert gtk-doc markup to reST at parse time |
+| `auto_xref` | `true` | Auto-link backticked symbol names |
+| `appendix_code_usages` | `false` | Append a "Referenced by" section to each symbol |
+| `heading_level` | `2` | Heading depth for symbols (`2` = `##`, `3` = `###`) |
+| `members` | `true` | Show struct/union/enum members |
+| `signature_style` | `"code"` | How to render function signatures (`"code"` or `"plain"`) |
+| `show_source_link` | `false` | Append `[source]` links to each symbol |
+| `source_uri` | `""` | URI template: `https://github.com/you/repo/blob/main/{filename}#L{line}` |
+| `fallback_parser` | `true` | Use regex parser when clang is unavailable |
+| `language` | `"c"` | Source language (`"c"` or `"cpp"`) |
+
+**Full example with all global options:**
+
+```yaml
+plugins:
+  - cdoc:
+      project_name: My Project
+      version_file: meson.build
+      clang_args: ["-Iinclude", "-DDEBUG=0"]
+      convert_rst: true
+      convert_gtkdoc: true
+      auto_xref: true
+      appendix_code_usages: true
+      heading_level: 2
+      members: true
+      signature_style: code
+      show_source_link: true
+      source_uri: "https://github.com/you/repo/blob/main/{filename}#L{line}"
+      fallback_parser: true
+      language: c
+
+      sources:
+        - root: src
+          nav_title: API
+          output_dir: api
+```
+
+#### Backward-compatible flat config (legacy)
+
+The following flat keys still work for IGT test configuration but are superseded by the nested `igt:` block in source groups:
+
+| Flat key | Equivalent | Description |
+|----------|-----------|-------------|
+| `test_mode: igt` | presence of `igt:` block | Enable IGT test parsing |
+| `test_group_by` | `igt.group_by` | Metadata fields for "By …" pages |
+| `test_fields` | `igt.fields` | Metadata fields to display |
+| `extract_test_steps` | `igt.extract_steps` | Parse subtest bodies for steps |
+
+---
+
+## Cross-references
+
+The plugin builds a symbol registry at build time and resolves references across all pages — generated API pages and hand-written docs alike.
+
+### reST roles in doc comments
+
+Use reST roles (portable to Sphinx):
+
+```c
+/**
+ * Initialize the engine.
+ *
+ * Must be called before :func:`engine_run`. Configure with
+ * :struct:`engine_config` first.
+ *
+ * :param flags: Init flags.
+ * :returns: 0 on success.
+ */
+int engine_init(unsigned int flags);
+```
+
+Available roles: `:func:`, `:struct:`, `:union:`, `:enum:`, `:macro:`, `:type:`, `:var:`, `:const:`, `:member:`, `:class:`, `:file:`, `:test:`, `:subtest:`. Domain-qualified forms like `:c:func:` also work.
+
+For struct members use dot notation: `:member:`engine_config.debug``. For files, use the bare filename if unique or qualify with the group: `:file:`core/engine.h``.
+
+### reST roles in Markdown pages
+
+The same roles work in hand-written Markdown:
+
+```markdown
+Call :func:`engine_init` with the appropriate flags, then pass
+an :struct:`engine_config` to :func:`engine_run`.
+```
+
+### Auto-linking
+
+When `auto_xref` is enabled (the default), backticked identifiers that match known symbols become links automatically:
+
+```markdown
+Call `engine_init()` first, then create an `engine_config` and
+pass it to `engine_run()`.
+```
+
+Trailing `()` signals a function reference. Bare backticked names link if they match a struct, enum, type, etc. Filenames with C/C++ extensions also auto-link. Unknown names stay as plain code.
+
+---
+
+## Rendering
+
+**Parameter tables** — function parameters render as a table. When type information is available (from clang), a Type column is added with cross-reference links for struct/custom types.
+
+**Pointer return types** — functions returning pointers (e.g. `char *get_name(...)`) render as "Pointer to `char`" rather than showing `*` in the name.
+
+**Example sections** — if a doc comment contains `Example:`, the description and code render side-by-side, similar to the Stripe API documentation layout.
+
+**Notes/Note sections** — if a doc comment contains `Notes:` or `Note:`, the content renders as a Material Design warning admonition:
+
+```
+!!! warning "Note"
+    This function is not thread-safe.
+    Call only from the main thread.
+```
+
+**Underscore-prefixed symbols** — functions with `_` or `__` prefix sort by the name without the prefix. `__engine_reset` sorts under **E**.
+
+---
+
+## gtk-doc migration
+
+If your codebase uses gtk-doc markup:
+
+```yaml
+plugins:
+  - cdoc:
+      convert_gtkdoc: true
+```
+
+| gtk-doc | Converts to |
+|---------|------------|
+| `function_name()` | `:func:`function_name`` |
+| `#TypeName` | `:type:`TypeName`` |
+| `#Struct.field` | `:member:`Struct.field`` |
+| `%CONSTANT` | `:const:`CONSTANT`` |
+| `@param: desc` | `:param param: desc` |
+| `Returns:` | `:returns:` |
+| `\|[ code ]\|` | fenced code block |
+
+Batch conversion CLI to permanently migrate source files:
+
+```bash
+python -m mkdocs_cdoc.convert src/
+python -m mkdocs_cdoc.convert src/ --dry-run
+python -m mkdocs_cdoc.convert src/ --backup
+```
+
+---
+
+## Inline directives
+
+Pull specific symbols into hand-written pages:
+
+```markdown
+::: c:autofunction
+    :file: engine.h
+    :name: engine_init
+
+::: c:autodoc
+    :file: uart.c
+```
+
+Full directive list: `autodoc`, `autofunction`, `autostruct`, `autounion`, `autoenum`, `automacro`, `autovar`, `autotype`.
+
+When using inline directives without automatic page generation, set `autodoc: false`:
+
+```yaml
+plugins:
+  - cdoc:
+      source_root: src/
+      autodoc: false
+```
+
+Then use directives in your hand-written pages to include only the symbols you want.
+
+---
 
 ## Test documentation (IGT GPU Tools)
 
@@ -117,13 +377,15 @@ sources:
 
 That's all you need. The presence of `igt:` enables test parsing for that source group.
 
-### IGT GPU Tools options
+### IGT options
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `group_by` | `[]` | Metadata fields to generate "By …" index pages for |
 | `fields` | same as `group_by` | Which metadata fields to show on each test page |
 | `extract_steps` | `false` | Parse subtest code bodies for step-by-step tables |
+
+When `fields` is not specified it defaults to the same list as `group_by`, so you don't need to repeat yourself.
 
 ### What it parses
 
@@ -183,6 +445,8 @@ Any `Key: Value` pair in the doc comment becomes a metadata field. Common conven
 
 Test-level fields (like Category) group all tests in a file. Subtest-level fields (like Functionality) group individual subtests and produce a different table layout on the "By …" pages.
 
+The plugin matches field names flexibly across underscore, hyphen, and space variations — `sub_category` in config matches `Sub-category` or `Sub category` in source comments.
+
 ### Generated pages
 
 The nav sidebar shows:
@@ -221,151 +485,11 @@ The :subtest:`kms_addfb@basic` subtest covers the happy path.
 
 The `test@subtest` notation mirrors IGT's `--run-subtest` convention. Short-form `:subtest:`basic`` works if the subtest name is unique across all tests.
 
-## Cross-references
-
-The plugin builds a symbol registry at build time and resolves references across all pages — generated API pages and hand-written docs alike.
-
-### reST roles in doc comments
-
-Use reST roles (portable to Sphinx):
-
-```c
-/**
- * Initialize the engine.
- *
- * Must be called before :func:`engine_run`. Configure with
- * :struct:`engine_config` first.
- *
- * :param flags: Init flags.
- * :returns: 0 on success.
- */
-int engine_init(unsigned int flags);
-```
-
-Available roles: `:func:`, `:struct:`, `:union:`, `:enum:`, `:macro:`, `:type:`, `:var:`, `:const:`, `:member:`, `:class:`, `:file:`, `:test:`, `:subtest:`. Domain-qualified forms like `:c:func:` also work.
-
-For struct members use dot notation: `:member:`engine_config.debug``. For files, use the bare filename if unique or qualify with the group: `:file:`core/engine.h``.
-
-### reST roles in Markdown pages
-
-The same roles work in hand-written Markdown:
-
-```markdown
-Call :func:`engine_init` with the appropriate flags, then pass
-an :struct:`engine_config` to :func:`engine_run`.
-```
-
-### Auto-linking
-
-When `auto_xref` is enabled (the default), backticked identifiers that match known symbols become links automatically:
-
-```markdown
-Call `engine_init()` first, then create an `engine_config` and
-pass it to `engine_run()`.
-```
-
-Trailing `()` signals a function reference. Bare backticked names link if they match a struct, enum, type, etc. Filenames with C/C++ extensions also auto-link. Unknown names stay as plain code.
-
-## Rendering
-
-**Parameter tables** — function parameters render as a table. When type information is available (from clang), a Type column is added with cross-reference links for struct/custom types.
-
-**Pointer return types** — functions returning pointers (e.g. `char *get_name(...)`) render as "Pointer to `char`" rather than showing `*` in the name.
-
-**Example sections** — if a doc comment contains `Example:`, the description and code render side-by-side, similar to the Stripe API documentation layout.
-
-**Underscore-prefixed symbols** — functions with `_` or `__` prefix sort by the name without the prefix. `__engine_reset` sorts under **E**.
-
-## gtk-doc migration
-
-If your codebase uses gtk-doc markup:
-
-```yaml
-plugins:
-  - cdoc:
-      convert_gtkdoc: true
-```
-
-| gtk-doc | Converts to |
-|---------|------------|
-| `function_name()` | `:func:`function_name`` |
-| `#TypeName` | `:type:`TypeName`` |
-| `#Struct.field` | `:member:`Struct.field`` |
-| `%CONSTANT` | `:const:`CONSTANT`` |
-| `@param: desc` | `:param param: desc` |
-| `Returns:` | `:returns:` |
-| `\|[ code ]\|` | fenced code block |
-
-Batch conversion CLI to permanently migrate source files:
-
-```bash
-python -m mkdocs_cdoc.convert src/
-python -m mkdocs_cdoc.convert src/ --dry-run
-python -m mkdocs_cdoc.convert src/ --backup
-```
-
-## Inline directives
-
-Pull specific symbols into hand-written pages:
-
-```markdown
-::: c:autofunction
-    :file: engine.h
-    :name: engine_init
-
-::: c:autodoc
-    :file: uart.c
-```
-
-Full directive list: `autodoc`, `autofunction`, `autostruct`, `autounion`, `autoenum`, `automacro`, `autovar`, `autotype`.
-
-## Global config reference
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `project_name` | `""` | Project name on the top-level overview page |
-| `version_file` | `""` | File to extract version from |
-| `sources` | `[]` | List of source group configs (see above) |
-| `clang_args` | `[]` | Global clang flags (merged with per-group flags) |
-| `convert_rst` | `true` | Convert reST markup to Markdown |
-| `convert_gtkdoc` | `false` | Convert gtk-doc markup to reST at parse time |
-| `auto_xref` | `true` | Auto-link backticked symbol names |
-| `appendix_code_usages` | `false` | Append a "Referenced by" section to each symbol |
-| `heading_level` | `2` | Heading depth for symbols |
-| `members` | `true` | Show struct/union/enum members |
-| `show_source_link` | `false` | Append `[source]` links |
-| `source_uri` | `""` | Template: `https://github.com/you/repo/blob/main/{filename}#L{line}` |
-| `fallback_parser` | `true` | Use regex parser when clang is unavailable |
-| `language` | `"c"` | Source language (`c` or `cpp`) |
-
-For single-source setups without `sources:`, these shortcuts are available: `source_root`, `autodoc_output_dir`, `autodoc_nav_title`, `autodoc_extensions`, `autodoc_exclude`, `autodoc_index`, `autodoc_pages`.
-
-## Example: GTK-doc based project config
-
-```yaml
-plugins:
-  - cdoc:
-      project_name: my-project
-      version_file: meson.build
-      clang_args: ["-Ilib", "-Itests", "-Iinclude"]
-
-      sources:
-        - root: lib
-          nav_title: Core API
-          output_dir: reference_api/lib
-
-        - root: tests
-          nav_title: Tests
-          output_dir: reference_api/tests
-          extensions: [".c"]
-
-      convert_rst: true
-      convert_gtkdoc: true
-```
+---
 
 ## Credits
 
-This project was inspired by the work of [Jani Nikula](https://github.com/jnikula) and the [Hawkmoth](https://github.com/jnikula/hawkmoth) project, which provides Sphinx-based autodoc for C. The core idea of extracting C doc comments through libclang originates there. mkdocs-cdoc adapts and extends that concept for the MkDocs ecosystem, adding multi-source-group navigation, cross-reference resolution, IGT GPU Tools test catalog generation, and gtk-doc migration tooling.
+This project was inspired by the work of [Jani Nikula](https://github.com/jnikula) and the [Hawkmoth](https://github.com/jnikula/hawkmoth) project, which provides Sphinx-based autodoc for C. The core idea of extracting C doc comments through libclang originates there. mkdocs-cdoc adapts and extends that concept for the MkDocs ecosystem, adding multi-source-group navigation, cross-reference resolution, IGT test catalog generation, and gtk-doc migration tooling.
 
 ## License
 

@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mkdocs-cdoc"
-version = "1.0.0"
-description = "MkDocs plugin that generates API documentation from C/C++ source comments, with built-in support for IGT GPU Tools test catalogs"
+version = "1.0.2"
+description="MkDocs plugin for C/C++ autodoc (Hawkmoth-like)"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
 authors = [
     {name = "mkdocs-cdoc contributors"},
 ]
-keywords = ["mkdocs", "documentation", "c", "c++", "autodoc", "api", "igt"]
+keywords = ["mkdocs", "documentation", "c", "autodoc", "api", "python"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

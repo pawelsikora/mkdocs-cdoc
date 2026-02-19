@@ -94,6 +94,9 @@ plugins:
       autodoc_extensions: [".c", ".h", ".hpp"]
       autodoc_exclude: ["**/internal/*", "test_*.c"]
       autodoc_index: true
+      custom_index_pages:
+        - docs/api-intro.md
+        - docs/conventions.md
       autodoc_pages:
         - docs/getting-started.md
         - docs/migration-guide.md
@@ -103,16 +106,19 @@ plugins:
 |--------|---------|-------------|
 | `source_root` | `""` | Path to the source tree |
 | `autodoc_nav_title` | `"API Reference"` | Nav section heading |
-| `autodoc_output_dir` | `"api"` | Where generated pages go |
+| `autodoc_output_dir` | `"API Reference"` | Where generated pages go |
 | `autodoc_extensions` | `[".c", ".h"]` | File extensions to scan |
 | `autodoc_exclude` | `[]` | Glob patterns to skip |
 | `autodoc_index` | `true` | Generate an overview page with file table and A–Z index |
+| `custom_index_pages` | `[]` | Markdown files to embed in the overview page (between file table and symbol index) |
 | `autodoc_pages` | `[]` | Extra hand-written pages to include in the nav section |
 | `autodoc` | `true` | Enable autodoc page generation (set `false` to only use inline directives) |
 
 Setting `autodoc_index: false` disables the overview page — useful if you only want individual file pages without a landing page.
 
 Setting `autodoc: false` disables all automatic page generation entirely. You'd then use [inline directives](#inline-directives) to pull specific symbols into hand-written pages.
+
+**`custom_index_pages` vs `pages`:** `custom_index_pages` embeds the markdown content directly into the overview/index page (between the source file table and the A–Z symbol index). `pages` adds separate pages to the nav sidebar alongside the generated API pages. Use `custom_index_pages` for introductory text, conventions, or quick-start guides you want visitors to see on the overview. Use `pages` for standalone docs that deserve their own page.
 
 ### Multi-source setup
 
@@ -164,11 +170,12 @@ Each entry under `sources:` accepts:
 |--------|---------|-------------|
 | `root` | *(required)* | Path to the source tree |
 | `nav_title` | `API (<dirname>)` | Nav section heading |
-| `output_dir` | `api/<dirname>` | Where generated pages go |
+| `output_dir` | `api_reference/<dirname>` | Where generated pages go |
 | `extensions` | `[".c", ".h"]` | File extensions to scan |
 | `exclude` | `[]` | Glob patterns to skip |
 | `clang_args` | `[]` | Extra flags, appended to global `clang_args` |
 | `index` | `true` | Generate an overview page |
+| `custom_index_pages` | `[]` | Markdown files to embed in the overview page |
 | `pages` | `[]` | Extra hand-written pages to include in the nav |
 | `igt` | — | IGT test framework options ([see below](#enabling-test-mode)) |
 

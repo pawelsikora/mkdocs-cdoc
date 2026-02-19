@@ -124,11 +124,12 @@ class SymbolEntry:
 class SourceGroup:
     root: str
     nav_title: str = "API Reference"
-    output_dir: str = "api"
+    output_dir: str = "api_reference"
     extensions: list[str] = field(default_factory=lambda: [".c", ".h"])
     exclude: list[str] = field(default_factory=list)
     clang_args: list[str] = field(default_factory=list)
     generate_index: bool = True
+    custom_index_pages: list[str] = field(default_factory=list)
     pages: list[dict] = field(default_factory=list)
     # IGT test options
     test_mode: str = ""
@@ -161,6 +162,7 @@ class CdocConfig(MkDocsConfig):
     autodoc_extensions = config_options.Type(list, default=[".c", ".h"])
     autodoc_exclude = config_options.Type(list, default=[])
     autodoc_index = config_options.Type(bool, default=True)
+    custom_index_pages = config_options.Type(list, default=[])
     autodoc_pages = config_options.Type(list, default=[])
     project_name = config_options.Type(str, default="")
     version_file = config_options.Type(str, default="")
@@ -564,6 +566,7 @@ class CdocPlugin(BasePlugin[CdocConfig]):
                     exclude=self.config["autodoc_exclude"],
                     clang_args=list(self.config["clang_args"]),
                     generate_index=self.config["autodoc_index"],
+                    custom_index_pages=list(self.config.get("custom_index_pages", [])),
                     pages=list(self.config.get("autodoc_pages", [])),
                     test_mode=self.config.get("test_mode", ""),
                     test_group_by=list(self.config.get("test_group_by", [])),
@@ -604,11 +607,12 @@ class CdocPlugin(BasePlugin[CdocConfig]):
                 SourceGroup(
                     root=root,
                     nav_title=entry.get("nav_title", f"API ({basename})"),
-                    output_dir=entry.get("output_dir", f"api_reference/{basename}"),
+                    output_dir=entry.get("output_dir", f"api/{basename}"),
                     extensions=entry.get("extensions", self.config["autodoc_extensions"]),
                     exclude=entry.get("exclude", self.config["autodoc_exclude"]),
                     clang_args=merged,
                     generate_index=entry.get("index", self.config["autodoc_index"]),
+                    custom_index_pages=list(entry.get("custom_index_pages", [])),
                     pages=list(entry.get("pages", [])),
                     test_mode=test_mode,
                     test_group_by=igt_group_by,
@@ -779,6 +783,7 @@ class CdocPlugin(BasePlugin[CdocConfig]):
         self._symbol_names.clear()
         self._ambiguous_files.clear()
         self._groups = self._build_groups(config_dir)
+        self._config_dir = config_dir
 
         self._use_dir_urls = config.get("use_directory_urls", True)
 
@@ -1143,6 +1148,30 @@ background:var(--md-code-bg-color,#f5f5f5);border-radius:3px}
                         f"| [{fn}]({link}) | {n} documented symbol{'s' if n != 1 else ''} |"
                     )
             lines.append("")
+
+        # Embed markdown content from custom_index_pages
+        if group.custom_index_pages:
+            for page_path in group.custom_index_pages:
+                abspath = page_path
+                if not os.path.isabs(abspath):
+                    # Try relative to config dir (project root) first
+                    candidate = os.path.normpath(os.path.join(self._config_dir, page_path))
+                    if os.path.isfile(candidate):
+                        abspath = candidate
+                    else:
+                        # Try relative to source group root
+                        candidate = os.path.normpath(os.path.join(group.root, page_path))
+                        if os.path.isfile(candidate):
+                            abspath = candidate
+                        else:
+                            abspath = candidate  # will fail below
+                if os.path.isfile(abspath):
+                    with open(abspath, "r", encoding="utf-8", errors="replace") as f:
+                        content = f.read().strip()
+                    if content:
+                        lines += ["---", "", content, ""]
+                else:
+                    log.warning("cdoc: custom_index_pages file not found: %s", page_path)
 
         lines += ["---", "", "## Symbol Index", ""]
         syms = self._group_symbols(group)

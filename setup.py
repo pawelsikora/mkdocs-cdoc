@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="mkdocs-cdoc",
-    version="1.0.5",
+    version="1.0.6",
     description="MkDocs plugin for C/C++ autodoc (Hawkmoth-like)",
     keywords="mkdocs cdoc c hawkmoth documentation python",
     url="https://github.com/pawelsikora/mkdocs-cdoc/",

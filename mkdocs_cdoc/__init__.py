@@ -6,4 +6,4 @@ as browsable API reference pages in MkDocs, with cross-referencing,
 symbol indexing, and test catalog support.
 """
 
-__version__ = "1.0.5"
+__version__ = "1.0.6"

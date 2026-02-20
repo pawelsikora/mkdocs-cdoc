@@ -256,7 +256,13 @@ class CdocPlugin(BasePlugin[CdocConfig]):
                 # Convert .md paths to directory paths for relpath calculation
                 # "api/lib/igt_aux.c.md" -> "api/lib/igt_aux.c/"
                 target_dir = target.removesuffix(".md") + "/"
-                current_dir = current_page_uri.removesuffix(".md") + "/"
+                # index.md files are served as the directory root, so
+                # "api/core/index.md" is served at "api/core/" not
+                # "api/core/index/". Use the containing directory.
+                if current_page_uri.endswith("/index.md") or current_page_uri == "index.md":
+                    current_dir = os.path.dirname(current_page_uri) + "/"
+                else:
+                    current_dir = current_page_uri.removesuffix(".md") + "/"
                 from_dir = current_dir  # we're "inside" this directory
                 rel = (
                     os.path.relpath(target_dir.rstrip("/"), from_dir.rstrip("/")).replace(
@@ -773,8 +779,24 @@ class CdocPlugin(BasePlugin[CdocConfig]):
 
     def on_config(self, config, **kwargs):
         config_dir = os.path.dirname(config.get("config_file_path", "")) or os.getcwd()
-        if not CLANG_AVAILABLE and self.config["fallback_parser"]:
-            log.warning("cdoc: clang not found, falling back to regex parser")
+        parser_mode = self.config.get("parser", "auto")
+        # Log parser configuration up front
+        clang_status = "available" if CLANG_AVAILABLE else "not installed"
+        log.info("cdoc: libclang %s, parser: %s", clang_status, parser_mode)
+        if parser_mode == "clang" and not CLANG_AVAILABLE:
+            log.error(
+                "cdoc: parser set to 'clang' but libclang is not installed, "
+                "build will fail or produce incomplete results"
+            )
+        elif parser_mode == "auto" and CLANG_AVAILABLE:
+            log.info("cdoc: using libclang for parsing")
+        elif parser_mode == "auto" and not CLANG_AVAILABLE:
+            if self.config["fallback_parser"]:
+                log.warning("cdoc: clang not found, falling back to regex parser")
+            else:
+                log.error("cdoc: clang not found and fallback_parser is disabled")
+        elif parser_mode == "regex":
+            log.info("cdoc: using regex parser (clang skipped)")
 
         self._cache.clear()
         self._pages.clear()
@@ -1079,6 +1101,23 @@ background:var(--md-code-bg-color,#f5f5f5);border-radius:3px}
             lines.append(f"- **[{g.nav_title}]({link})** — {nfiles} files{desc}")
         lines.append("")
 
+        # Embed markdown content from top-level custom_index_pages
+        top_pages = list(self.config.get("custom_index_pages", []))
+        if top_pages:
+            for page_path in top_pages:
+                abspath = page_path
+                if not os.path.isabs(abspath):
+                    candidate = os.path.normpath(os.path.join(self._config_dir, page_path))
+                    if os.path.isfile(candidate):
+                        abspath = candidate
+                if os.path.isfile(abspath):
+                    with open(abspath, "r", encoding="utf-8", errors="replace") as f:
+                        content = f.read().strip()
+                    if content:
+                        lines += ["---", "", content, ""]
+                else:
+                    log.warning("cdoc: custom_index_pages file not found: %s", page_path)
+
         return "\n".join(lines)
 
     def _mk_index(self, group):
@@ -1115,6 +1154,30 @@ background:var(--md-code-bg-color,#f5f5f5);border-radius:3px}
 
         lines.append(bar)
 
+        # Embed markdown content from custom_index_pages (before Source Files)
+        if group.custom_index_pages:
+            for page_path in group.custom_index_pages:
+                abspath = page_path
+                if not os.path.isabs(abspath):
+                    # Try relative to config dir (project root) first
+                    candidate = os.path.normpath(os.path.join(self._config_dir, page_path))
+                    if os.path.isfile(candidate):
+                        abspath = candidate
+                    else:
+                        # Try relative to source group root
+                        candidate = os.path.normpath(os.path.join(group.root, page_path))
+                        if os.path.isfile(candidate):
+                            abspath = candidate
+                        else:
+                            abspath = candidate  # will fail below
+                if os.path.isfile(abspath):
+                    with open(abspath, "r", encoding="utf-8", errors="replace") as f:
+                        content = f.read().strip()
+                    if content:
+                        lines += ["", content, "", "---", ""]
+                else:
+                    log.warning("cdoc: custom_index_pages file not found: %s", page_path)
+
         by_dir = {}
         for rel in sorted(group.discovered):
             d = os.path.dirname(rel).replace(os.sep, "/") or ""
@@ -1148,30 +1211,6 @@ background:var(--md-code-bg-color,#f5f5f5);border-radius:3px}
                         f"| [{fn}]({link}) | {n} documented symbol{'s' if n != 1 else ''} |"
                     )
             lines.append("")
-
-        # Embed markdown content from custom_index_pages
-        if group.custom_index_pages:
-            for page_path in group.custom_index_pages:
-                abspath = page_path
-                if not os.path.isabs(abspath):
-                    # Try relative to config dir (project root) first
-                    candidate = os.path.normpath(os.path.join(self._config_dir, page_path))
-                    if os.path.isfile(candidate):
-                        abspath = candidate
-                    else:
-                        # Try relative to source group root
-                        candidate = os.path.normpath(os.path.join(group.root, page_path))
-                        if os.path.isfile(candidate):
-                            abspath = candidate
-                        else:
-                            abspath = candidate  # will fail below
-                if os.path.isfile(abspath):
-                    with open(abspath, "r", encoding="utf-8", errors="replace") as f:
-                        content = f.read().strip()
-                    if content:
-                        lines += ["---", "", content, ""]
-                else:
-                    log.warning("cdoc: custom_index_pages file not found: %s", page_path)
 
         lines += ["---", "", "## Symbol Index", ""]
         syms = self._group_symbols(group)
@@ -1476,20 +1515,28 @@ background:var(--md-code-bg-color,#f5f5f5);border-radius:3px}
             return []
 
         clang_args = group.clang_args if group else self.config["clang_args"]
-        docs = []
-        need_fallback = not CLANG_AVAILABLE
 
-        if CLANG_AVAILABLE:
+        docs = []
+        parser_mode = self.config.get("parser", "auto")
+        use_clang = CLANG_AVAILABLE and parser_mode in ("auto", "clang")
+        use_regex = parser_mode == "regex" or (not use_clang and self.config["fallback_parser"])
+        need_fallback = not use_clang
+
+        if use_clang:
             try:
                 docs = parse_file(abspath, clang_args=clang_args)
             except Exception as exc:
                 if self.config["fallback_parser"]:
-                    log.debug("cdoc: clang failed on %s (%s), trying regex", abspath, exc)
+                    log.debug(
+                        "cdoc: clang failed on %s (%s), trying regex",
+                        abspath,
+                        exc,
+                    )
                     need_fallback = True
                 else:
                     log.error("cdoc: parse error %s: %s", abspath, exc)
 
-        if need_fallback and self.config["fallback_parser"]:
+        if need_fallback and (use_regex or self.config["fallback_parser"]):
             try:
                 docs = parse_file_regex(abspath)
             except Exception as exc:

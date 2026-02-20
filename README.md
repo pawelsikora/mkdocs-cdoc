@@ -1,9 +1,9 @@
 # mkdocs-cdoc
 
 [![CI](https://github.com/pawelsikora/mkdocs-cdoc/actions/workflows/ci.yml/badge.svg)](https://github.com/pawelsikora/mkdocs-cdoc/actions/workflows/ci.yml)
-![PyPI - Version](https://img.shields.io/pypi/v/mkdocs-cdoc)
-![Python versions](https://img.shields.io/pypi/pyversions/mkdocs-cdoc)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI - Version](https://img.shields.io/pypi/v/mkdocs-cdoc)]
+[![Python versions](https://img.shields.io/pypi/pyversions/mkdocs-cdoc)]
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)]
 [![MkDocs](https://img.shields.io/badge/MkDocs-plugin-blue)](https://www.mkdocs.org/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 

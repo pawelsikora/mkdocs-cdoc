@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from mkdocs.config import config_options
 from mkdocs.config.base import Config as MkDocsConfig
 from mkdocs.plugins import BasePlugin
-from mkdocs.structure.files import File
+from mkdocs.structure.files import File, InclusionLevel
 
 from .parser import (
     SymbolKind,
@@ -124,7 +124,7 @@ class SymbolEntry:
 class SourceGroup:
     root: str
     nav_title: str = "API Reference"
-    output_dir: str = "api_reference"
+    output_dir: str = "API Reference"
     extensions: list[str] = field(default_factory=lambda: [".c", ".h"])
     exclude: list[str] = field(default_factory=list)
     clang_args: list[str] = field(default_factory=list)
@@ -155,9 +155,10 @@ class CdocConfig(MkDocsConfig):
     convert_gtkdoc = config_options.Type(bool, default=False)
     auto_xref = config_options.Type(bool, default=True)
     language = config_options.Type(str, default="c")
+    parser = config_options.Type(str, default="auto")
     fallback_parser = config_options.Type(bool, default=True)
     autodoc = config_options.Type(bool, default=True)
-    autodoc_output_dir = config_options.Type(str, default="api_reference")
+    autodoc_output_dir = config_options.Type(str, default="API Reference")
     autodoc_nav_title = config_options.Type(str, default="API Reference")
     autodoc_extensions = config_options.Type(list, default=[".c", ".h"])
     autodoc_exclude = config_options.Type(list, default=[])
@@ -205,6 +206,7 @@ class CdocPlugin(BasePlugin[CdocConfig]):
         self._ambiguous_files = set()
         self._use_dir_urls = True
         self._version = None
+        self._render_count = 0
 
     # ── Symbol registry ──
 
@@ -649,13 +651,20 @@ class CdocPlugin(BasePlugin[CdocConfig]):
             self._pages[uri] = (abspath, group)
 
             docs = self._parse(abspath, group)
-            self._register_symbols(docs, uri, group)
             self._register_file_symbol(rel, uri, group)
 
             if group.test_mode == "igt":
                 tmeta = parse_igt_test_file(abspath, extract_steps=group.extract_test_steps)
                 group.test_metas[rel] = tmeta
                 self._register_test_symbols(tmeta, uri, group)
+                # Only register parsed symbols (functions, structs, etc.)
+                # when there is no test metadata — _mk_test_page skips
+                # rendering them when tmeta exists, so the anchors
+                # would not exist on the page and cause 404s.
+                if not tmeta:
+                    self._register_symbols(docs, uri, group)
+            else:
+                self._register_symbols(docs, uri, group)
 
         if group.generate_index and group.discovered:
             idx = f"{group.output_dir}/index.md"
@@ -804,6 +813,7 @@ class CdocPlugin(BasePlugin[CdocConfig]):
         self._symbols.clear()
         self._symbol_names.clear()
         self._ambiguous_files.clear()
+        self._render_count = 0
         self._groups = self._build_groups(config_dir)
         self._config_dir = config_dir
 
@@ -846,13 +856,14 @@ class CdocPlugin(BasePlugin[CdocConfig]):
     def on_files(self, files, *, config, **kwargs):
         for uri in sorted(self._pages):
             try:
-                f = File.generated(config, uri, content="")
+                f = File.generated(config, uri, content="", inclusion=InclusionLevel.NOT_IN_NAV)
             except (AttributeError, TypeError):
                 f = File(
                     uri,
                     config["docs_dir"],
                     config["site_dir"],
                     config.get("use_directory_urls", True),
+                    inclusion=InclusionLevel.NOT_IN_NAV,
                 )
                 dest = os.path.join(config["docs_dir"], uri)
                 os.makedirs(os.path.dirname(dest), exist_ok=True)
@@ -860,12 +871,61 @@ class CdocPlugin(BasePlugin[CdocConfig]):
                 self._tmpfiles.append(dest)
             f.edit_uri = None
             files.append(f)
+
+        # Mark custom_index_pages files as NOT_IN_NAV so MkDocs
+        # doesn't warn about them missing from the nav config
+        custom_pages = set()
+        docs_dir = config["docs_dir"]
+        for g in self._groups:
+            for p in g.custom_index_pages:
+                custom_pages.add(p)
+        for p in self.config.get("custom_index_pages", []):
+            custom_pages.add(p)
+        if custom_pages:
+            # Normalize to paths relative to docs_dir for matching
+            normalized = set()
+            for p in custom_pages:
+                abspath = p
+                if not os.path.isabs(abspath):
+                    abspath = os.path.normpath(os.path.join(self._config_dir, p))
+                # If the file is inside docs_dir, compute relative path
+                try:
+                    rel = os.path.relpath(abspath, docs_dir)
+                    if not rel.startswith(".."):
+                        normalized.add(rel.replace(os.sep, "/"))
+                except ValueError:
+                    pass
+            for f in files:
+                src = (getattr(f, "src_path", None) or "").replace(os.sep, "/")
+                if src in normalized:
+                    f.inclusion = InclusionLevel.NOT_IN_NAV
+
         return files
 
     def on_page_markdown(self, markdown, *, page, config, files, **kwargs):
         src_uri = getattr(page.file, "src_uri", None) or page.file.src_path
 
         if src_uri in self._pages:
+            self._render_count += 1
+            total = len(self._pages)
+            # Log progress at first page, every 50 pages, and at the last page
+            if (
+                self._render_count == 1
+                or self._render_count % 50 == 0
+                or self._render_count == total
+            ):
+                if self._render_count == total:
+                    log.info(
+                        "cdoc: rendering complete, %d pages",
+                        total,
+                    )
+                else:
+                    log.info(
+                        "cdoc: rendering pages... (%d/%d)",
+                        self._render_count,
+                        total,
+                    )
+
             target, group = self._pages[src_uri]
             if target == "__TOP_INDEX__":
                 md = self._mk_top_index()

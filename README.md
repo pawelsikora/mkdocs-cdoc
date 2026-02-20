@@ -1,9 +1,9 @@
 # mkdocs-cdoc
 
 [![CI](https://github.com/pawelsikora/mkdocs-cdoc/actions/workflows/ci.yml/badge.svg)](https://github.com/pawelsikora/mkdocs-cdoc/actions/workflows/ci.yml)
-[![PyPI - Version](https://img.shields.io/pypi/v/mkdocs-cdoc)]
-[![Python versions](https://img.shields.io/pypi/pyversions/mkdocs-cdoc)]
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)]
+[![PyPI - Version](https://img.shields.io/pypi/v/mkdocs-cdoc)](https://pypi.org/project/mkdocs-cdoc/)
+![Python versions](https://img.shields.io/pypi/pyversions/mkdocs-cdoc)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MkDocs](https://img.shields.io/badge/MkDocs-plugin-blue)](https://www.mkdocs.org/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
@@ -110,7 +110,7 @@ plugins:
 | `autodoc_extensions` | `[".c", ".h"]` | File extensions to scan |
 | `autodoc_exclude` | `[]` | Glob patterns to skip |
 | `autodoc_index` | `true` | Generate an overview page with file table and A–Z index |
-| `custom_index_pages` | `[]` | Markdown files to embed in the overview page (between file table and symbol index) |
+| `custom_index_pages` | `[]` | Markdown files to embed in the overview page (before the source file table) |
 | `autodoc_pages` | `[]` | Extra hand-written pages to include in the nav section |
 | `autodoc` | `true` | Enable autodoc page generation (set `false` to only use inline directives) |
 
@@ -118,7 +118,11 @@ Setting `autodoc_index: false` disables the overview page — useful if you only
 
 Setting `autodoc: false` disables all automatic page generation entirely. You'd then use [inline directives](#inline-directives) to pull specific symbols into hand-written pages.
 
-**`custom_index_pages` vs `pages`:** `custom_index_pages` embeds the markdown content directly into the overview/index page (between the source file table and the A–Z symbol index). `pages` adds separate pages to the nav sidebar alongside the generated API pages. Use `custom_index_pages` for introductory text, conventions, or quick-start guides you want visitors to see on the overview. Use `pages` for standalone docs that deserve their own page.
+**`custom_index_pages` vs `pages`:** `custom_index_pages` embeds the markdown content directly into the overview/index page, before the source file table and A–Z symbol index. `pages` adds separate pages to the nav sidebar alongside the generated API pages. Use `custom_index_pages` for introductory text, conventions, or quick-start guides you want visitors to see on the overview. Use `pages` for standalone docs that deserve their own page.
+
+In multi-source setups, `custom_index_pages` can be set at two levels: at the top level (content appears on the main "API Reference" page) and per source group (content appears on that group's overview page).
+
+Files listed in `custom_index_pages` are automatically marked as `NOT_IN_NAV` so MkDocs won't warn about them not being included in the `nav` configuration. The same applies to all generated API pages — they are managed entirely by the plugin and don't need `nav` entries.
 
 ### Multi-source setup
 
@@ -170,12 +174,12 @@ Each entry under `sources:` accepts:
 |--------|---------|-------------|
 | `root` | *(required)* | Path to the source tree |
 | `nav_title` | `API (<dirname>)` | Nav section heading |
-| `output_dir` | `api_reference/<dirname>` | Where generated pages go |
+| `output_dir` | `API Reference/<dirname>` | Where generated pages go |
 | `extensions` | `[".c", ".h"]` | File extensions to scan |
 | `exclude` | `[]` | Glob patterns to skip |
 | `clang_args` | `[]` | Extra flags, appended to global `clang_args` |
 | `index` | `true` | Generate an overview page |
-| `custom_index_pages` | `[]` | Markdown files to embed in the overview page |
+| `custom_index_pages` | `[]` | Markdown files to embed in the overview page (before the source file table) |
 | `pages` | `[]` | Extra hand-written pages to include in the nav |
 | `igt` | — | IGT test framework options ([see below](#enabling-test-mode)) |
 
@@ -198,6 +202,7 @@ These apply to all source groups:
 | `show_source_link` | `false` | Append `[source]` links to each symbol |
 | `source_uri` | `""` | URI template: `https://github.com/you/repo/blob/main/{filename}#L{line}` |
 | `fallback_parser` | `true` | Use regex parser when clang is unavailable |
+| `parser` | `"auto"` | Parser backend: `"auto"`, `"clang"`, or `"regex"` |
 | `language` | `"c"` | Source language (`"c"` or `"cpp"`) |
 
 **Full example with all global options:**
@@ -236,6 +241,31 @@ The following flat keys still work for IGT test configuration but are superseded
 | `test_group_by` | `igt.group_by` | Metadata fields for "By …" pages |
 | `test_fields` | `igt.fields` | Metadata fields to display |
 | `extract_test_steps` | `igt.extract_steps` | Parse subtest bodies for steps |
+
+---
+
+## Build output
+
+During a build, the plugin logs its progress so you can see what's happening:
+
+```
+INFO - cdoc: libclang available, parser: auto
+INFO - cdoc: using libclang for parsing
+INFO - cdoc: project version 1.4 (from meson.build)
+INFO - cdoc: [Core API] 287 files in lib
+INFO - cdoc: [Tests] 423 files in tests
+INFO - cdoc: symbol registry built, 4821 symbols indexed
+INFO - cdoc: rendering pages... (50/465)
+INFO - cdoc: rendering pages... (100/465)
+INFO - cdoc: rendering pages... (150/465)
+...
+INFO - cdoc: rendering pages... (465/465)
+INFO - Documentation built in 34.12 seconds
+```
+
+The first lines report parser configuration and source discovery. During page rendering — the slowest phase for large projects — the plugin logs progress every 50 pages so you can gauge how far along the build is.
+
+All generated API pages and `custom_index_pages` files are marked as `NOT_IN_NAV` internally, so MkDocs won't warn about them not being included in your `nav` configuration.
 
 ---
 

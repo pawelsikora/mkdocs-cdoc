@@ -9,6 +9,10 @@ plugins:
       project_name: My Project
       version_file: version.json
 
+      # Top-level API Reference custom content
+      custom_index_pages:
+        - docs/api_ref.md
+
       # Source directories
       sources:
         - root: src/core
@@ -19,6 +23,8 @@ plugins:
           nav_title: Driver API
           output_dir: api/drivers
           extensions: [".c"]
+          custom_index_pages:
+            - docs/driver-intro.md
 
         - root: src/lib
           nav_title: Library API

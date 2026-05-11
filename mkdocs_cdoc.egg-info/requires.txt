@@ -1,0 +1,10 @@
+mkdocs>=1.4
+
+[clang]
+clang>=14.0
+
+[dev]
+pytest
+black
+flake8
+pylint

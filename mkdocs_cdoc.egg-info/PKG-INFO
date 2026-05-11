@@ -1,0 +1,134 @@
+Metadata-Version: 2.4
+Name: mkdocs-cdoc
+Version: 1.0.6
+Summary: MkDocs plugin for C/C++ autodoc (Hawkmoth-like)
+Home-page: https://github.com/pawelsikora/mkdocs-cdoc/
+Author: mkdocs-cdoc contributors
+Author-email: sikor6@gmail.com
+License: MIT
+Project-URL: Homepage, https://github.com/your-org/mkdocs-cdoc
+Project-URL: Repository, https://github.com/your-org/mkdocs-cdoc
+Project-URL: Issues, https://github.com/your-org/mkdocs-cdoc/issues
+Keywords: mkdocs,documentation,c,autodoc,api,python
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Documentation
+Classifier: Topic :: Software Development :: Documentation
+Classifier: Framework :: MkDocs
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: mkdocs>=1.4
+Provides-Extra: clang
+Requires-Dist: clang>=14.0; extra == "clang"
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: pylint; extra == "dev"
+Dynamic: author-email
+Dynamic: home-page
+Dynamic: license-file
+
+# mkdocs-cdoc
+
+![Claude](https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=claude&logoColor=white)
+
+[![CI](https://github.com/pawelsikora/mkdocs-cdoc/actions/workflows/ci.yml/badge.svg)](https://github.com/pawelsikora/mkdocs-cdoc/actions/workflows/ci.yml)
+[![Docs](https://github.com/pawelsikora/mkdocs-cdoc/actions/workflows/docs.yml/badge.svg)](https://pawelsikora.github.io/mkdocs-cdoc/)
+[![Python](https://img.shields.io/pypi/pyversions/mkdocs-cdoc)](https://pypi.org/project/mkdocs-cdoc/)
+[![PyPI](https://img.shields.io/pypi/v/mkdocs-cdoc)](https://pypi.org/project/mkdocs-cdoc/)
+[![License](https://img.shields.io/github/license/pawelsikora/mkdocs-cdoc)](LICENSE)
+[![MkDocs](https://img.shields.io/badge/MkDocs-plugin-blue)](https://www.mkdocs.org/)
+[![Discord](https://img.shields.io/discord/1474618001558081586?logo=discord&label=Discord&color=5865F2)](https://discord.gg/dqadWt5p4g)
+
+**Generate browsable API documentation from C/C++ source comments directly in MkDocs** — with cross-referencing, symbol indexing, and first-class support for [IGT GPU Tools](https://gitlab.freedesktop.org/drm/igt-gpu-tools) test catalogs.
+
+📖 **[Full Documentation](https://pawelsikora.github.io/mkdocs-cdoc/)** · 🎯 **[Live Example](https://pawelsikora.github.io/mkdocs-cdoc/example-site/)**
+
+---
+
+## Features
+
+- **Autodoc from C/C++ sources** — scans source trees, extracts `/** ... */` doc comments, generates per-file pages with function signatures, parameter tables, and struct/enum member listings
+- **Cross-reference everything** — `:func:`, `:struct:`, `:file:`, backtick auto-linking across generated pages and hand-written Markdown
+- **Multiple source groups** — separate nav sections for libraries, drivers, tests, each with their own A–Z index and overview
+- **IGT test catalog** — parses `TEST:` / `SUBTEST:` structured comments and `igt_subtest()` / `igt_describe()` macros to build test catalogs with metadata tables and "By Category" / "By Functionality" index pages
+- **gtk-doc migration** — converts `#TypeName`, `function()`, `%CONSTANT`, `@param` markup, plus a CLI for batch conversion
+- **Clang + regex** — uses libclang when available, falls back to regex so it works everywhere
+
+## Quick start
+
+```bash
+pip install mkdocs-cdoc
+```
+
+Minimal `mkdocs.yml`:
+
+```yaml
+plugins:
+  - cdoc:
+      source_root: src/
+```
+
+Multi-source with IGT test support:
+
+```yaml
+plugins:
+  - cdoc:
+      project_name: My Project
+      version_file: meson.build
+
+      sources:
+        - root: lib
+          nav_title: Core API
+          output_dir: api/lib
+
+        - root: tests
+          nav_title: Tests
+          output_dir: api/tests
+          extensions: [".c"]
+          igt:
+            group_by: [category, mega_feature, sub_category, functionality]
+
+      convert_rst: true
+      convert_gtkdoc: true
+```
+
+## Documentation
+
+| Topic | Description |
+|-------|-------------|
+| [Installation](https://pawelsikora.github.io/mkdocs-cdoc/getting-started/installation/) | Install with or without libclang |
+| [Quick Start](https://pawelsikora.github.io/mkdocs-cdoc/getting-started/quickstart/) | Minimal working setup |
+| [Configuration](https://pawelsikora.github.io/mkdocs-cdoc/configuration/single-source/) | All config options — single-source, multi-source, global |
+| [Cross-References](https://pawelsikora.github.io/mkdocs-cdoc/features/cross-references/) | reST roles, auto-linking, test references |
+| [Inline Directives](https://pawelsikora.github.io/mkdocs-cdoc/features/inline-directives/) | Embed specific symbols in hand-written pages |
+| [gtk-doc Migration](https://pawelsikora.github.io/mkdocs-cdoc/features/gtkdoc-migration/) | Conversion table and batch CLI |
+| [IGT GPU Tools](https://pawelsikora.github.io/mkdocs-cdoc/igt/overview/) | Test parsing, metadata, generated pages |
+| [Custom Index Pages](https://pawelsikora.github.io/mkdocs-cdoc/configuration/custom-index-pages/) | Embed content in overview pages |
+| [Live Example](https://pawelsikora.github.io/mkdocs-cdoc/example-site/) | Built example project |
+
+## Try the example locally
+
+```bash
+git clone https://github.com/pawelsikora/mkdocs-cdoc.git
+cd mkdocs-cdoc
+pip install -e .
+cd example
+mkdocs serve
+```
+
+## Credits
+
+Inspired by [Jani Nikula](https://github.com/jnikula)'s [Hawkmoth](https://github.com/jnikula/hawkmoth) project. The core idea of extracting C doc comments through libclang originates there. mkdocs-cdoc adapts and extends that concept for the MkDocs ecosystem.
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.

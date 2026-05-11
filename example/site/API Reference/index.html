@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Overview - My Project Docs</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../css/brands.min.css" rel="stylesheet">
+        <link href="../css/solid.min.css" rel="stylesheet">
+        <link href="../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">My Project Docs</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href=".." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">API Reference</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">Overview</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Core API</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../api/core/" class="dropdown-item">Overview</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Driver API</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../api/drivers/" class="dropdown-item">Overview</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Library API</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../api/lib/" class="dropdown-item">Overview</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Test API</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../api/tests/" class="dropdown-item">Overview</a>
+</li>
+            
+<li>
+    <a href="../api/tests/by-category/" class="dropdown-item">By Category</a>
+</li>
+            
+<li>
+    <a href="../api/tests/by-mega_feature/" class="dropdown-item">By Mega Feature</a>
+</li>
+            
+<li>
+    <a href="../api/tests/by-sub_category/" class="dropdown-item">By Sub Category</a>
+</li>
+            
+<li>
+    <a href="../api/tests/by-functionality/" class="dropdown-item">By Functionality</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href=".." class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../api/core/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#api-reference-for-my-project" class="nav-link">API Reference for My Project</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#sources" class="nav-link">Sources</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="1"><a href="#api-reference-manual" class="nav-link">API Reference Manual</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#core-xe-api-reference" class="nav-link">Core / Xe API Reference</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#i915-api-reference" class="nav-link">i915 API Reference</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="api-reference-for-my-project">API Reference for My Project</h1>
+<div style="padding:12px 16px;border-left:4px solid var(--md-typeset-a-color,#1a73e8);background:var(--md-admonition-bg-color,rgba(68,138,255,.1));border-radius:4px;margin-bottom:16px">
+<strong>Version 1.4</strong>
+</div>
+
+<p>This reference covers 71 documented symbols across 4 source groups.</p>
+<h2 id="sources">Sources</h2>
+<ul>
+<li><strong><a href="../api/core/">Core API</a></strong> — 2 files — 12 symbols</li>
+<li><strong><a href="../api/drivers/">Driver API</a></strong> — 2 files — 9 symbols</li>
+<li><strong><a href="../api/lib/">Library API</a></strong> — 2 files — 9 symbols</li>
+<li><strong><a href="../api/tests/">Test API</a></strong> — 5 files — 5 tests, 13 subtests</li>
+</ul>
+<hr />
+<h1 id="api-reference-manual">API Reference Manual</h1>
+<p>Welcome to the igt-gpu-tools API reference.</p>
+<p>The reference covers two areas:</p>
+<ul>
+<li><strong><a href="api_reference/lib">Core Library</a></strong> (<code>lib/</code>) — shared helpers for DRM testing, KMS,
+  framebuffer management, debugfs, GPU-specific support, and more.
+  These are the building blocks that all IGT tests rely on.</li>
+<li><strong><a href="api_reference/tests">Tests</a></strong> (<code>tests/</code>) — the full test catalog with structured metadata,
+  subtest listings, and "By Category" / "By Functionality" group pages.</li>
+</ul>
+<p>Each library module below links to its generated API page with function
+signatures, parameter tables, and cross-referenced symbols. Use the A–Z
+index on each overview page to jump directly to any symbol.</p>
+<hr />
+<h2 id="core-xe-api-reference">Core / Xe API Reference</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Source</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DMABUF Sync File</strong></td>
+<td><code>dmabuf_sync_file.c</code></td>
+<td>DMABUF importing/exporting fencing support library</td>
+</tr>
+<tr>
+<td><strong>drmtest</strong></td>
+<td><code>drmtest.c</code></td>
+<td>Base library for drm tests and tools</td>
+</tr>
+<tr>
+<td><strong>ALSA</strong></td>
+<td><code>igt_alsa.c</code></td>
+<td>Library with ALSA helpers</td>
+</tr>
+<tr>
+<td><strong>Audio</strong></td>
+<td><code>igt_audio.c</code></td>
+<td>Library for audio-related tests</td>
+</tr>
+<tr>
+<td><strong>aux</strong></td>
+<td><a href="../api/lib/igt_aux.c/"><code>igt_aux.c</code></a></td>
+<td>Auxiliary libraries and support functions</td>
+</tr>
+<tr>
+<td><strong>Chamelium</strong></td>
+<td><code>igt_chamelium.c</code></td>
+<td>Library for using the Chamelium into igt tests</td>
+</tr>
+<tr>
+<td><strong>Collection</strong></td>
+<td><code>igt_collection.c</code></td>
+<td>Generic combinatorics library</td>
+</tr>
+<tr>
+<td><strong>Core</strong></td>
+<td><a href="../api/lib/igt_core.c/"><code>igt_core.c</code></a></td>
+<td>Core i-g-t testing support</td>
+</tr>
+<tr>
+<td><strong>CRC</strong></td>
+<td><code>igt_crc.c</code></td>
+<td>igt crc tables and calculation functions</td>
+</tr>
+<tr>
+<td><strong>debugfs</strong></td>
+<td><code>igt_debugfs.c</code></td>
+<td>Support code for debugfs features</td>
+</tr>
+<tr>
+<td><strong>igt_device</strong></td>
+<td><code>igt_device.c</code></td>
+<td>igt_device</td>
+</tr>
+<tr>
+<td><strong>Device selection</strong></td>
+<td><code>igt_device_scan.c</code></td>
+<td>Device scanning and selection</td>
+</tr>
+<tr>
+<td><strong>Draw</strong></td>
+<td><code>igt_draw.c</code></td>
+<td>drawing helpers for tests</td>
+</tr>
+<tr>
+<td><strong>Dummyload</strong></td>
+<td><code>igt_dummyload.c</code></td>
+<td>Library for submitting GPU workloads</td>
+</tr>
+<tr>
+<td><strong>Framebuffer</strong></td>
+<td><code>igt_fb.c</code></td>
+<td>Framebuffer handling and drawing library</td>
+</tr>
+<tr>
+<td><strong>Frame</strong></td>
+<td><code>igt_frame.c</code></td>
+<td>Library for frame-related tests</td>
+</tr>
+<tr>
+<td><strong>fs</strong></td>
+<td><code>igt_fs.c</code></td>
+<td>Helpers for file operations</td>
+</tr>
+<tr>
+<td><strong>GT</strong></td>
+<td><code>igt_gt.c</code></td>
+<td>GT support library</td>
+</tr>
+<tr>
+<td><strong>Hook support</strong></td>
+<td><code>igt_hook.c</code></td>
+<td>Support for running a hook script on test execution</td>
+</tr>
+<tr>
+<td><strong>kmod</strong></td>
+<td><code>igt_kmod.c</code></td>
+<td>Wrappers around libkmod for module loading/unloading</td>
+</tr>
+<tr>
+<td><strong>KMS</strong></td>
+<td><code>igt_kms.c</code></td>
+<td>Kernel modesetting support library</td>
+</tr>
+<tr>
+<td><strong>IGT List</strong></td>
+<td><code>igt_list.c</code></td>
+<td>a list implementation inspired by the kernel</td>
+</tr>
+<tr>
+<td><strong>IGT Map</strong></td>
+<td><code>igt_map.c</code></td>
+<td>a linear-reprobing hashmap implementation</td>
+</tr>
+<tr>
+<td><strong>msm</strong></td>
+<td><code>igt_msm.c</code></td>
+<td>msm support library</td>
+</tr>
+<tr>
+<td><strong>pipe_crc</strong></td>
+<td><code>igt_pipe_crc.c</code></td>
+<td>Pipe CRC support</td>
+</tr>
+<tr>
+<td><strong>Power Management</strong></td>
+<td><code>igt_power.c</code></td>
+<td>Power Management related helpers</td>
+</tr>
+<tr>
+<td><strong>Primes</strong></td>
+<td><code>igt_primes.c</code></td>
+<td>Prime numbers helper library</td>
+</tr>
+<tr>
+<td><strong>Random</strong></td>
+<td><code>igt_rand.c</code></td>
+<td>Random numbers helper library</td>
+</tr>
+<tr>
+<td><strong>Stats</strong></td>
+<td><code>igt_stats.c</code></td>
+<td>Tools for statistical analysis</td>
+</tr>
+<tr>
+<td><strong>syncobj</strong></td>
+<td><code>igt_syncobj.c</code></td>
+<td>Library with syncobj helpers</td>
+</tr>
+<tr>
+<td><strong>sysfs</strong></td>
+<td><code>igt_sysfs.c</code></td>
+<td>Support code for sysfs features</td>
+</tr>
+<tr>
+<td><strong>VC4</strong></td>
+<td><code>igt_vc4.c</code></td>
+<td>VC4 support library</td>
+</tr>
+<tr>
+<td><strong>VGEM</strong></td>
+<td><code>igt_vgem.c</code></td>
+<td>VGEM support library</td>
+</tr>
+<tr>
+<td><strong>x86</strong></td>
+<td><code>igt_x86.c</code></td>
+<td>x86 helper library</td>
+</tr>
+<tr>
+<td><strong>Intel allocator</strong></td>
+<td><code>intel_allocator.c</code></td>
+<td>igt implementation of allocator</td>
+</tr>
+<tr>
+<td><strong>Batch Buffer</strong></td>
+<td><code>intel_batchbuffer.c</code></td>
+<td>Batchbuffer and blitter support</td>
+</tr>
+<tr>
+<td><strong>Buffer operations</strong></td>
+<td><code>intel_bufops.c</code></td>
+<td>Buffer operation on tiled surfaces</td>
+</tr>
+<tr>
+<td><strong>Chipset</strong></td>
+<td><code>intel_chipset.c</code></td>
+<td>Feature macros and chipset helpers</td>
+</tr>
+<tr>
+<td><strong>I/O</strong></td>
+<td><code>intel_mmio.c</code></td>
+<td>Register access and sideband I/O library</td>
+</tr>
+<tr>
+<td><strong>ioctl wrappers</strong></td>
+<td><code>ioctl_wrappers.c</code></td>
+<td>ioctl wrappers and related functions</td>
+</tr>
+<tr>
+<td><strong>SW Sync</strong></td>
+<td><code>sw_sync.c</code></td>
+<td>Software sync (fencing) support library</td>
+</tr>
+</tbody>
+</table>
+<h2 id="i915-api-reference">i915 API Reference</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Source</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GEM Create</strong></td>
+<td><code>gem.c</code></td>
+<td>Helpers for dealing with objects creation</td>
+</tr>
+<tr>
+<td><strong>GEM Context</strong></td>
+<td><code>gem_context.c</code></td>
+<td>Helpers for dealing with contexts</td>
+</tr>
+<tr>
+<td><strong>GEM Engine Topology</strong></td>
+<td><code>gem_engine_topology.c</code></td>
+<td>Helpers for dealing engine topology</td>
+</tr>
+<tr>
+<td><strong>GEM Scheduler</strong></td>
+<td><code>gem_scheduler.c</code></td>
+<td>Helpers for querying scheduler capabilities</td>
+</tr>
+<tr>
+<td><strong>GEM Submission</strong></td>
+<td><code>gem_submission.c</code></td>
+<td>Helpers for determining submission method</td>
+</tr>
+<tr>
+<td><strong>Blitter library</strong></td>
+<td><code>intel_blt.c</code></td>
+<td>i915/xe blitter library</td>
+</tr>
+<tr>
+<td><strong>I915 GPU CRC</strong></td>
+<td><code>i915_crc.c</code></td>
+<td>i915 gpu crc</td>
+</tr>
+<tr>
+<td><strong>Intel Context Wrapper</strong></td>
+<td><code>intel_ctx.c</code></td>
+<td>Wrapper structs for dealing with contexts</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p>This documentation is auto-generated from C/C++ source comments using
+<a href="https://github.com/pawelsikora/mkdocs-cdoc">mkdocs-cdoc</a>.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js"></script>
+        <script src="../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

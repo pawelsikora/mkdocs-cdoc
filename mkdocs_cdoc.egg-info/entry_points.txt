@@ -1,0 +1,2 @@
+[mkdocs.plugins]
+cdoc = mkdocs_cdoc.plugin:CdocPlugin

@@ -1,0 +1,16 @@
+LICENSE
+README.md
+pyproject.toml
+setup.py
+mkdocs_cdoc/__init__.py
+mkdocs_cdoc/convert.py
+mkdocs_cdoc/parser.py
+mkdocs_cdoc/plugin.py
+mkdocs_cdoc/renderer.py
+mkdocs_cdoc.egg-info/PKG-INFO
+mkdocs_cdoc.egg-info/SOURCES.txt
+mkdocs_cdoc.egg-info/dependency_links.txt
+mkdocs_cdoc.egg-info/entry_points.txt
+mkdocs_cdoc.egg-info/requires.txt
+mkdocs_cdoc.egg-info/top_level.txt
+tests/test_cdoc.py

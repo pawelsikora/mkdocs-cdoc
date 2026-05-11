@@ -34,9 +34,11 @@ dependencies = [
 clang = ["clang>=14.0"]
 dev = [
     "pytest",
+    "pytest-cov",
     "black",
     "flake8",
     "pylint",
+    "mypy",
 ]
 
 [project.urls]

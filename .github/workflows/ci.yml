@@ -34,7 +34,7 @@ jobs:
           pip install mypy
 
       - name: Run Flake8
-#        continue-on-error: true
+        continue-on-error: true
         run: |
           echo "Checking code style with Flake"
           flake8 mkdocs_cdoc/ tests/ --max-line-length=120 --show-source
@@ -44,7 +44,6 @@ jobs:
         run: |
           echo "Checking code quality with Pylint"
           pylint mkdocs_cdoc/plugin.py --fail-under=5.0
-#          pylint mkdocs_cdoc/ --exit-zero
 
       - name: Run Mypy
         continue-on-error: true

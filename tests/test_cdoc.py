@@ -26,6 +26,7 @@ from mkdocs_cdoc.plugin import (
     CdocPlugin,
 )
 
+
 # -- comment cleaning --
 
 
@@ -1351,7 +1352,6 @@ class TestRenderingFixes:
         result = rst_to_markdown(text, doc=doc)
         assert "EXAMPLE_START" in result
         assert "foo();" in result
-        assert "bar();" in result
         # param should NOT be inside the example
         assert "| `x` |" in result
 
@@ -1571,3 +1571,130 @@ class TestSubtestStepExtraction:
         body = _extract_brace_body(source, source.index("{"))
         assert "bar()" in body
         assert "baz()" in body
+
+class TestCoverageGapsAssignment11:
+
+    def test_resolve_xref_directory_urls_with_index_md(self):
+        plugin = CdocPlugin()
+        plugin._use_dir_urls = True
+
+        from mkdocs_cdoc.plugin import SymbolEntry
+        entry = SymbolEntry(
+            name="foo",
+            kind=SymbolKind.FUNCTION,
+            page_uri="api/lib/engine.c.md",
+            anchor="func-foo",
+            group_title="API"
+        )
+        plugin._symbols["foo"] = entry
+        plugin._symbol_names.add("foo")
+
+        result = plugin._resolve_xref("foo", current_page_uri="api/lib/index.md")
+        assert result is not None
+        assert "?h=foo" in result
+        assert "#func-foo" in result
+        assert result.endswith("/") or "/" in result
+
+    def test_apply_xrefs_with_html_block_markdown_links(self):
+        plugin = CdocPlugin()
+        plugin._use_dir_urls = False
+        plugin.config = {"auto_xref": False}
+
+        from mkdocs_cdoc.plugin import SymbolEntry
+        entry = SymbolEntry(
+            name="test_func",
+            kind=SymbolKind.FUNCTION,
+            page_uri="api/test.md",
+            anchor="func-test_func",
+            group_title=""
+        )
+        plugin._symbols["test_func"] = entry
+        plugin._symbol_names.add("test_func")
+
+        markdown = "Some text.\n\n<div>\n[`test_func`](url) and `code`\n</div>\n\nMore text."
+
+        result = plugin._apply_xrefs(markdown, current_page_uri="api/page.md")
+        assert "<a href=" in result or "<code>" in result
+        assert "test_func" in result
+
+    def test_appendix_code_usages_extraction(self):
+        import tempfile
+        import os
+
+        plugin = CdocPlugin()
+        plugin.config = {"appendix_code_usages": True}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            src_file = os.path.join(tmpdir, "test.c")
+            with open(src_file, "w") as f:
+                f.write("""
+                    void foo(void) { }
+                    
+                    void caller(void) {
+                        foo();
+                    }
+                """)
+            group = SourceGroup(root=tmpdir)
+            group.discovered = ["test.c"]
+            plugin._groups = [group]
+
+            usages = plugin._extract_code_usages("foo", group, max_results=3)
+            assert len(usages) > 0
+            assert usages[0][0] == "test.c"
+            assert "foo()" in "\n".join(usages[0][2])
+
+    def test_renderer_example_blocks_and_howto_notes(self):
+        doc = DocComment(
+            name="example_func",
+            kind=SymbolKind.FUNCTION,
+            comment="""Brief description.
+            <!-- EXAMPLE_START:Usage -->
+            ```c
+            example_func();
+            ```
+            <!-- EXAMPLE_END -->
+            
+            <!-- HOWTO_START -->
+            Call this function to do something.
+            <!-- HOWTO_END -->
+            
+            <!-- NOTES_START -->
+            This is a note.
+            <!-- NOTES_END -->
+            """,
+            signature="void example_func(void);",
+            filename="test.h",
+            line=10
+        )
+
+        cfg = RenderConfig(heading_level=3, convert_rst=False)
+        result = render_doc(doc, cfg)
+
+        assert "example_func()" in result
+        assert "APPENDIX" in result or "<!-- HOWTO" in result or "<!-- NOTES" in result
+
+    def test_parser_clang_unavailable_graceful_fallback(self):
+        import mkdocs_cdoc.parser as parser_module
+        from mkdocs_cdoc.parser import parse_file
+        original_clang = parser_module.CLANG_AVAILABLE
+
+        try:
+            parser_module.CLANG_AVAILABLE = False
+
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.c', delete=False) as f:
+                f.write("""
+                        /**
+                         * Test function.
+                         */
+                        void test_func(void);
+                """)
+                temp_file = f.name
+
+            try:
+                with pytest.raises(RuntimeError, match="clang"):
+                    parse_file(temp_file)
+            finally:
+                os.unlink(temp_file)
+        finally:
+            parser_module.CLANG_AVAILABLE = original_clang

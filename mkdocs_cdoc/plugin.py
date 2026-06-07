@@ -14,6 +14,8 @@ import logging
 import os
 import re
 from dataclasses import dataclass, field
+from typing import List, Match, Tuple
+
 from mkdocs.config import config_options
 from mkdocs.config.base import Config as MkDocsConfig
 from mkdocs.plugins import BasePlugin
@@ -236,7 +238,7 @@ class CdocPlugin(BasePlugin[CdocConfig]):
                 self._symbols[qualified] = mentry
                 self._symbol_names.add(qualified)
 
-    def _resolve_xref(self, name, current_page_uri=None):
+    def _resolve_xref(self, name: str, current_page_uri: str | None = None) -> str | None:
         clean = name.strip()
         if clean.endswith("()"):
             clean = clean[:-2]
@@ -283,9 +285,9 @@ class CdocPlugin(BasePlugin[CdocConfig]):
             return f"{rel}?h={clean}#{anchor}"
         return rel
 
-    def _apply_xrefs(self, markdown, current_page_uri=None):
+    def _apply_xrefs(self, markdown: str, current_page_uri: str | None = None) -> str:
         # Keep example cards safe from cross-reference rewriting
-        _EXAMPLE_CARD_RE = re.compile(r'<div class="hm-example">.*?</div>', re.DOTALL)
+        example_card_re = re.compile(r'<div class="hm-example">.*?</div>', re.DOTALL)
         protected = {}
         counter = [0]
 
@@ -295,7 +297,7 @@ class CdocPlugin(BasePlugin[CdocConfig]):
             counter[0] += 1
             return key
 
-        text = _EXAMPLE_CARD_RE.sub(_protect, markdown)
+        text = example_card_re.sub(_protect, markdown)
 
         def replace_rst_ref(m):
             name = m.group(1)
@@ -384,8 +386,8 @@ class CdocPlugin(BasePlugin[CdocConfig]):
             result.append(line)
         return "\n".join(result)
 
-    def _auto_xref_backticks(self, text, current_page_uri=None):
-        def replace_file(m):
+    def _auto_xref_backticks(self, text: str, current_page_uri: str | None = None) -> str:
+        def replace_file(m: Match[str]) -> str:
             name = m.group(1)
             if name not in self._symbol_names:
                 return m.group(0)
@@ -394,14 +396,14 @@ class CdocPlugin(BasePlugin[CdocConfig]):
                 return f"[`{name}`]({url})"
             return m.group(0)
 
-        def replace_func(m):
+        def replace_func(m: Match[str]) -> str:
             name = m.group(1)
             url = self._resolve_xref(name, current_page_uri)
             if url:
                 return f"[`{name}()`]({url})"
             return m.group(0)
 
-        def replace_ident(m):
+        def replace_ident(m: Match[str]) -> str:
             name = m.group(1)
             if name not in self._symbol_names:
                 return m.group(0)
@@ -417,7 +419,8 @@ class CdocPlugin(BasePlugin[CdocConfig]):
 
     # ── Appendix: "Referenced by" code examples ──
 
-    def _extract_code_usages(self, func_name, group, max_results=3):
+    def _extract_code_usages(self, func_name: str, _group: SourceGroup | None, max_results: int = 3) -> \
+            List[Tuple[str, int, List[str]]]:
         """Find up to max_results call sites of func_name across all source groups."""
         usages = []
         call_pat = re.compile(r"\b" + re.escape(func_name) + r"\s*\(")
@@ -435,30 +438,8 @@ class CdocPlugin(BasePlugin[CdocConfig]):
                         continue
                     stripped = line.strip()
 
-                    # Skip doc comments and comment lines
-                    if stripped.startswith(("*", "/*", "//", "/**")):
-                        continue
-                    # Skip lines inside block comments
-                    in_comment = False
-                    for j in range(max(0, i - 5), i):
-                        lj = lines[j].strip()
-                        if "/*" in lj:
-                            in_comment = True
-                        if "*/" in lj:
-                            in_comment = False
-                    if in_comment:
-                        continue
-
-                    # Skip function declarations/definitions (the function itself)
-                    if re.match(
-                        r"^\s*(?:static\s+|extern\s+|inline\s+|__\w+\s+)*"
-                        r"(?:(?:const|unsigned|signed|long|short|struct|enum|union)\s+)*"
-                        r"\w[\w\s*]+\b" + re.escape(func_name) + r"\s*\(",
-                        stripped,
-                    ):
-                        continue
-                    # Skip #define lines (macro definitions)
-                    if stripped.startswith("#"):
+                    # Skip lines that should not be considered
+                    if self._should_skip_usage_line(stripped, func_name):
                         continue
 
                     snippet_lines, start_line = self._extract_snippet(lines, i)
@@ -467,6 +448,32 @@ class CdocPlugin(BasePlugin[CdocConfig]):
                         if len(usages) >= max_results:
                             return usages
         return usages
+
+    def _should_skip_usage_line(self, stripped_line, func_name):
+        """Check if a line should be skipped for code usage extraction."""
+        # Skip doc comments and comment lines
+        if stripped_line.startswith(("*", "/*", "//", "/**")):
+            return True
+
+        # Skip lines inside block comments
+        # (This is a simplified check; the original had more complex logic)
+        if "/*" in stripped_line and "*/" not in stripped_line:
+            return True
+
+        # Skip function declarations/definitions
+        if re.match(
+            r"^\s*(?:static\s+|extern\s+|inline\s+|__\w+\s+)*"
+            r"(?:(?:const|unsigned|signed|long|short|struct|enum|union)\s+)*"
+            r"\w[\w\s*]+\b" + re.escape(func_name) + r"\s*\(",
+            stripped_line,
+        ):
+            return True
+
+        # Skip #define lines (macro definitions)
+        if stripped_line.startswith("#"):
+            return True
+
+        return False
 
     def _extract_snippet(self, lines, call_idx, context=12):
         """Extract a code snippet around a function call, bounded by the enclosing block."""

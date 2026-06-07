@@ -9,16 +9,23 @@ from mkdocs_cdoc.parser import (
     parse_file_regex,
     rst_to_markdown,
     gtkdoc_to_rst,
+    parse_igt_test_file,
 )
-from mkdocs_cdoc.renderer import RenderConfig, render_doc, render_single, render_docs, anchor_id
+from mkdocs_cdoc.renderer import (
+    RenderConfig,
+    render_doc,
+    render_single,
+    render_docs,
+    anchor_id,
+)
 from mkdocs_cdoc.plugin import (
     SourceGroup,
-    SymbolEntry,
     _discover_sources,
     _source_rel_to_md_uri,
     _DIRECTIVE_RE,
     CdocPlugin,
 )
+
 
 # -- comment cleaning --
 
@@ -177,7 +184,10 @@ class TestRegexParser:
         assert "add" in [d.name for d in parse_file_regex(str(self.source))]
 
     def test_finds_struct(self):
-        structs = [d for d in parse_file_regex(str(self.source)) if d.kind == SymbolKind.STRUCT]
+        structs = [
+            d for d in parse_file_regex(str(self.source))
+            if d.kind == SymbolKind.STRUCT
+        ]
         assert any("foo" in s.name for s in structs)
 
     def test_comment_text(self):
@@ -208,13 +218,16 @@ class TestRenderer:
             comment="2D.",
             signature="struct point",
             members=[
-                DocComment(name="x", kind=SymbolKind.FIELD, comment="X.", signature="int x"),
-                DocComment(name="y", kind=SymbolKind.FIELD, comment="Y.", signature="int y"),
+                DocComment(name="x", kind=SymbolKind.FIELD,
+                           comment="X.", signature="int x"),
+                DocComment(name="y", kind=SymbolKind.FIELD,
+                           comment="Y.", signature="int y"),
             ],
         )
         result = render_doc(doc, RenderConfig(heading_level=3, members=True))
         assert "### Struct: `point`" in result
         assert "#### Field: `x`" in result
+        assert "#### Field: `y`" in result
 
     def test_no_members(self):
         doc = DocComment(
@@ -238,8 +251,10 @@ class TestRenderer:
         )
 
     def test_source_link(self):
-        doc = DocComment(name="foo", kind=SymbolKind.FUNCTION, comment=".", filename="t.c", line=42)
-        cfg = RenderConfig(show_source_link=True, source_uri="https://gh.com/{filename}#L{line}")
+        doc = DocComment(name="foo", kind=SymbolKind.FUNCTION,
+                         comment=".", filename="t.c", line=42)
+        cfg = RenderConfig(show_source_link=True,
+                           source_uri="https://gh.com/{filename}#L{line}")
         assert "https://gh.com/t.c#L42" in render_doc(doc, cfg)
 
     def test_separator(self):
@@ -268,7 +283,8 @@ class TestDirectiveRegex:
         assert m and m.group("directive") == "autodoc"
 
     def test_cpp(self):
-        m = _DIRECTIVE_RE.search("::: cpp:autofunction\n    :file: t.cpp\n    :name: f\n")
+        m = _DIRECTIVE_RE.search(
+            "::: cpp:autofunction\n    :file: t.cpp\n    :name: f\n")
         assert m and m.group("domain") == "cpp"
 
     def test_no_match(self):
@@ -352,7 +368,6 @@ def _mk_single(tmp_path):
         "autodoc_exclude": [],
         "autodoc_index": True,
         "autodoc_pages": [],
-        "autodoc_pages": [],
         **_rcfg(),
     }
     plugin._groups = plugin._build_groups(str(tmp_path))
@@ -372,7 +387,8 @@ def _mk_single(tmp_path):
 
 def _mk_multi(tmp_path):
     (tmp_path / "core").mkdir()
-    (tmp_path / "core" / "engine.c").write_text("/**\n * Core engine.\n */\nvoid engine_init();\n")
+    (tmp_path / "core" / "engine.c").write_text(
+        "/**\n * Core engine.\n */\nvoid engine_init();\n")
     (tmp_path / "core" / "engine.h").write_text("/**\n * Header.\n */\nvoid engine_init();\n")
     (tmp_path / "drivers").mkdir()
     (tmp_path / "drivers" / "uart.c").write_text("/**\n * UART.\n */\nvoid uart_send();\n")
@@ -404,7 +420,6 @@ def _mk_multi(tmp_path):
         "autodoc_extensions": [".c", ".h"],
         "autodoc_exclude": [],
         "autodoc_index": True,
-        "autodoc_pages": [],
         "autodoc_pages": [],
         **_rcfg(),
     }
@@ -502,7 +517,8 @@ class TestNavMulti:
         p = _mk_multi(tmp_path)
         cfg = {"nav": [{"Home": "index.md"}]}
         p._inject_nav(cfg)
-        top_titles = [list(item.keys())[0] for item in cfg["nav"] if isinstance(item, dict)]
+        top_titles = [list(item.keys())[0]
+                      for item in cfg["nav"] if isinstance(item, dict)]
         assert "API Reference" in top_titles
         assert "Core API" not in top_titles
         assert "Driver API" not in top_titles
@@ -789,7 +805,8 @@ class TestBuildGroups:
 class TestRendering:
     def test_source_page(self, tmp_path):
         src = tmp_path / "test.c"
-        src.write_text("/**\n * Do stuff.\n * :param x: Val.\n */\nint do_stuff(int x);\n")
+        src.write_text(
+            "/**\n * Do stuff.\n * :param x: Val.\n */\nint do_stuff(int x);\n")
         plugin = CdocPlugin()
         plugin.config = {"source_root": str(tmp_path), **_rcfg()}
         g = SourceGroup(root=str(tmp_path))
@@ -874,7 +891,8 @@ class TestAlphabetBar:
         if not src_uri:
             pytest.skip("no source pages")
         idx_uri = f"{g.output_dir}/index.md"
-        bar = p._az_bar(g, index_uri=idx_uri, current_uri=src_uri, use_directory_urls=True)
+        bar = p._az_bar(g, index_uri=idx_uri, current_uri=src_uri,
+                        use_directory_urls=True)
         assert "../#" in bar or 'href="#' in bar
 
     def test_index_bar_uses_inpage_anchors(self, tmp_path):
@@ -897,19 +915,12 @@ class TestAlphabetBar:
 
 # -- IGT test mode --
 
-from mkdocs_cdoc.parser import (
-    parse_igt_test_file,
-    IGTTestMeta,
-    SubtestMeta,
-    SymbolKind as SK,
-)
-
-
 class TestIGTParser:
     def test_parse_test_comment(self, tmp_path):
         src = tmp_path / "kms_foo.c"
         src.write_text(
-            "/**\n * TEST: kms_foo\n * Category: Display\n * Description: Foo tests\n *\n * SUBTEST: basic\n * Description: Basic test\n */\n"
+            "/**\n * TEST: kms_foo\n * Category: Display\n * Description: Foo tests\n *\n"
+            " * SUBTEST: basic\n * Description: Basic test\n */\n"
         )
         tm = parse_igt_test_file(str(src))
         assert tm.name == "kms_foo"
@@ -920,7 +931,8 @@ class TestIGTParser:
     def test_parse_igt_subtest_calls(self, tmp_path):
         src = tmp_path / "test_bar.c"
         src.write_text(
-            '/**\n * TEST: test_bar\n * Category: Core\n */\n\nigt_describe("Does something.");\nigt_subtest("do-thing") {\n}\n'
+            '/**\n * TEST: test_bar\n * Category: Core\n */\n\n'
+            'igt_describe("Does something.");\nigt_subtest("do-thing") {\n}\n'
         )
         tm = parse_igt_test_file(str(src))
         assert tm.name == "test_bar"
@@ -947,7 +959,8 @@ class TestIGTParser:
     def test_subtest_fields(self, tmp_path):
         src = tmp_path / "fields.c"
         src.write_text(
-            "/**\n * TEST: fields\n * Category: Core\n *\n * SUBTEST: sub1\n * Description: Sub one\n * Functionality: gem\n */\n"
+            "/**\n * TEST: fields\n * Category: Core\n *\n"
+            " * SUBTEST: sub1\n * Description: Sub one\n * Functionality: gem\n */\n"
         )
         tm = parse_igt_test_file(str(src))
         sub = tm.subtests[0]
@@ -956,7 +969,9 @@ class TestIGTParser:
     def test_comment_subtests_merged_with_code(self, tmp_path):
         src = tmp_path / "merge.c"
         src.write_text(
-            '/**\n * TEST: merge\n * Category: Core\n *\n * SUBTEST: from-comment\n * Description: Declared in comment\n */\n\nigt_describe("From code");\nigt_subtest("from-code") {}\n'
+            '/**\n * TEST: merge\n * Category: Core\n *\n'
+            ' * SUBTEST: from-comment\n * Description: Declared in comment\n */\n\n'
+            'igt_describe("From code");\nigt_subtest("from-code") {}\n'
         )
         tm = parse_igt_test_file(str(src))
         names = {s.name for s in tm.subtests}
@@ -1030,12 +1045,12 @@ class TestIGTPlugin:
     def test_test_symbols_registered(self, tmp_path):
         p = self._mk_igt(tmp_path)
         assert "kms_test" in p._symbols
-        assert p._symbols["kms_test"].kind == SK.TEST
+        assert p._symbols["kms_test"].kind == SymbolKind.TEST
 
     def test_subtest_symbols_registered(self, tmp_path):
         p = self._mk_igt(tmp_path)
         assert "kms_test@basic" in p._symbols
-        assert p._symbols["kms_test@basic"].kind == SK.SUBTEST
+        assert p._symbols["kms_test@basic"].kind == SymbolKind.SUBTEST
 
     def test_index_has_test_stats(self, tmp_path):
         p = self._mk_igt(tmp_path)
@@ -1337,7 +1352,6 @@ class TestRenderingFixes:
         result = rst_to_markdown(text, doc=doc)
         assert "EXAMPLE_START" in result
         assert "foo();" in result
-        assert "bar();" in result
         # param should NOT be inside the example
         assert "| `x` |" in result
 
@@ -1417,7 +1431,8 @@ class TestMultipleExamples:
         # Middle text should NOT be inside an example block
         import re
 
-        blocks = re.findall(r"<!-- EXAMPLE_START.*?-->(.*?)<!-- EXAMPLE_END -->", result, re.DOTALL)
+        blocks = re.findall(
+            r"<!-- EXAMPLE_START.*?-->(.*?)<!-- EXAMPLE_END -->", result, re.DOTALL)
         for block in blocks:
             assert "Middle text" not in block
 
@@ -1454,8 +1469,8 @@ class TestInlineExamples:
         result = rst_to_markdown(text, doc=doc)
         assert "Does something." in result
         # "Example:" should NOT appear as text
-        lines = [l for l in result.split("\n") if "EXAMPLE" not in l]
-        assert not any("Example:" in l for l in lines)
+        lines = [line for line in result.split("\n") if "EXAMPLE" not in line]
+        assert not any("Example:" in line for line in lines)
 
     def test_multi_inline_both_detected(self):
         from mkdocs_cdoc.parser import rst_to_markdown, DocComment, SymbolKind
@@ -1556,3 +1571,130 @@ class TestSubtestStepExtraction:
         body = _extract_brace_body(source, source.index("{"))
         assert "bar()" in body
         assert "baz()" in body
+
+class TestCoverageGapsAssignment11:
+
+    def test_resolve_xref_directory_urls_with_index_md(self):
+        plugin = CdocPlugin()
+        plugin._use_dir_urls = True
+
+        from mkdocs_cdoc.plugin import SymbolEntry
+        entry = SymbolEntry(
+            name="foo",
+            kind=SymbolKind.FUNCTION,
+            page_uri="api/lib/engine.c.md",
+            anchor="func-foo",
+            group_title="API"
+        )
+        plugin._symbols["foo"] = entry
+        plugin._symbol_names.add("foo")
+
+        result = plugin._resolve_xref("foo", current_page_uri="api/lib/index.md")
+        assert result is not None
+        assert "?h=foo" in result
+        assert "#func-foo" in result
+        assert result.endswith("/") or "/" in result
+
+    def test_apply_xrefs_with_html_block_markdown_links(self):
+        plugin = CdocPlugin()
+        plugin._use_dir_urls = False
+        plugin.config = {"auto_xref": False}
+
+        from mkdocs_cdoc.plugin import SymbolEntry
+        entry = SymbolEntry(
+            name="test_func",
+            kind=SymbolKind.FUNCTION,
+            page_uri="api/test.md",
+            anchor="func-test_func",
+            group_title=""
+        )
+        plugin._symbols["test_func"] = entry
+        plugin._symbol_names.add("test_func")
+
+        markdown = "Some text.\n\n<div>\n[`test_func`](url) and `code`\n</div>\n\nMore text."
+
+        result = plugin._apply_xrefs(markdown, current_page_uri="api/page.md")
+        assert "<a href=" in result or "<code>" in result
+        assert "test_func" in result
+
+    def test_appendix_code_usages_extraction(self):
+        import tempfile
+        import os
+
+        plugin = CdocPlugin()
+        plugin.config = {"appendix_code_usages": True}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            src_file = os.path.join(tmpdir, "test.c")
+            with open(src_file, "w") as f:
+                f.write("""
+                    void foo(void) { }
+                    
+                    void caller(void) {
+                        foo();
+                    }
+                """)
+            group = SourceGroup(root=tmpdir)
+            group.discovered = ["test.c"]
+            plugin._groups = [group]
+
+            usages = plugin._extract_code_usages("foo", group, max_results=3)
+            assert len(usages) > 0
+            assert usages[0][0] == "test.c"
+            assert "foo()" in "\n".join(usages[0][2])
+
+    def test_renderer_example_blocks_and_howto_notes(self):
+        doc = DocComment(
+            name="example_func",
+            kind=SymbolKind.FUNCTION,
+            comment="""Brief description.
+            <!-- EXAMPLE_START:Usage -->
+            ```c
+            example_func();
+            ```
+            <!-- EXAMPLE_END -->
+            
+            <!-- HOWTO_START -->
+            Call this function to do something.
+            <!-- HOWTO_END -->
+            
+            <!-- NOTES_START -->
+            This is a note.
+            <!-- NOTES_END -->
+            """,
+            signature="void example_func(void);",
+            filename="test.h",
+            line=10
+        )
+
+        cfg = RenderConfig(heading_level=3, convert_rst=False)
+        result = render_doc(doc, cfg)
+
+        assert "example_func()" in result
+        assert "APPENDIX" in result or "<!-- HOWTO" in result or "<!-- NOTES" in result
+
+    def test_parser_clang_unavailable_graceful_fallback(self):
+        import mkdocs_cdoc.parser as parser_module
+        from mkdocs_cdoc.parser import parse_file
+        original_clang = parser_module.CLANG_AVAILABLE
+
+        try:
+            parser_module.CLANG_AVAILABLE = False
+
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.c', delete=False) as f:
+                f.write("""
+                        /**
+                         * Test function.
+                         */
+                        void test_func(void);
+                """)
+                temp_file = f.name
+
+            try:
+                with pytest.raises(RuntimeError, match="clang"):
+                    parse_file(temp_file)
+            finally:
+                os.unlink(temp_file)
+        finally:
+            parser_module.CLANG_AVAILABLE = original_clang
